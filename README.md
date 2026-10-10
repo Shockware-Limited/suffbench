@@ -1,6 +1,6 @@
 # SuffBench
 
-**Status: specification only. No instances are released yet.** Version 0.1.0-spec, October 2026.
+**Status: specification only. No instances are released yet.** Version 0.1.0-spec, October 2026. DOI [10.5281/zenodo.23282863](https://doi.org/10.5281/zenodo.23282863).
 
 SuffBench is a benchmark format for *context sufficiency* in code editing: for each real code-change
 task it records not only the task, the accepted fix, and the tests that decide whether a fix works,
@@ -10,7 +10,7 @@ context-selection method can be scored on coverage and cost offline, without run
 
 The definitions behind the format are in the note
 *ε-Sufficient Context for Bounded Readers: Definitions and a Non-Monotonicity Result for Code Editing*,
-DOI [10.5281/zenodo.23282196](https://doi.org/10.5281/zenodo.23282196). This repository is the
+concept DOI [10.5281/zenodo.23282195](https://doi.org/10.5281/zenodo.23282195) (version 1.1: 10.5281/zenodo.23282824). This repository is the
 normative specification of the instance format, the slice definitions, the datasheet, and the
 command-line contract of the planned context compiler.
 

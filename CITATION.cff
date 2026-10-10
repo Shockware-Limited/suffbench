@@ -9,6 +9,7 @@ authors:
     affiliation: Shockware Limited
 date-released: 2026-10-10
 version: 0.1.0-spec
+doi: 10.5281/zenodo.23282863
 license: CC-BY-4.0
 repository-code: https://github.com/Shockware-Limited/suffbench
 keywords:
