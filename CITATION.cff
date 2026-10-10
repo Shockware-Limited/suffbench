@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: "If you use this specification, please cite it and the defining note."
+type: dataset
+title: "SuffBench: specification for a context-sufficiency benchmark (v0.1.0-spec)"
+authors:
+  - family-names: Johansen
+    given-names: Jude Castiel
+    orcid: https://orcid.org/0009-0002-5644-3073
+    affiliation: Shockware Limited
+date-released: 2026-10-10
+version: 0.1.0-spec
+license: CC-BY-4.0
+repository-code: https://github.com/Shockware-Limited/suffbench
+keywords:
+  - context sufficiency
+  - benchmark specification
+  - code editing
+  - language model agents
+  - regression tests
+references:
+  - type: article
+    title: "ε-Sufficient Context for Bounded Readers: Definitions and a Non-Monotonicity Result for Code Editing"
+    authors:
+      - family-names: Johansen
+        given-names: Jude Castiel
+    doi: 10.5281/zenodo.23282196
+    year: 2026

@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Shockware-Limited/suffbench/schema/instance.schema.json",
+  "title": "SuffBench instance (spec 0.1.0)",
+  "type": "object",
+  "required": [
+    "instance_id", "repo", "base_commit", "gold_commit", "created_at", "task_text", "task_text_source",
+    "gold_patch", "test_patch", "granularity", "write_set", "interface_write_set", "fail_to_pass", "pass_to_pass",
+    "excluded_tests", "backward_slice", "forward_slice", "coverage_slice", "closure_check", "tokens", "provenance"
+  ],
+  "properties": {
+    "instance_id": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+__[A-Za-z0-9_.-]+-[0-9a-f]{12}$" },
+    "repo": { "type": "string", "description": "owner/name on the hosting service" },
+    "base_commit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "gold_commit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "task_text": { "type": "string" },
+    "task_text_source": { "type": "string", "enum": ["issue", "pr_body_stripped", "rewritten_spec"] },
+    "gold_patch": { "type": "string" },
+    "test_patch": { "type": "string" },
+    "granularity": { "type": "string", "enum": ["package", "file", "symbol"] },
+    "write_set": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+    "interface_write_set": { "type": "array", "items": { "type": "string" } },
+    "fail_to_pass": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+    "pass_to_pass": { "type": "array", "items": { "type": "string" } },
+    "excluded_tests": {
+      "type": "array",
+      "items": { "type": "object", "required": ["test", "clean_runs", "clean_failures"],
+        "properties": { "test": { "type": "string" }, "clean_runs": { "type": "integer" }, "clean_failures": { "type": "integer" } } }
+    },
+    "backward_slice": { "type": "array", "items": { "type": "string" } },
+    "forward_slice": { "type": "array", "items": { "type": "string" } },
+    "coverage_slice": { "type": "array", "items": { "type": "string" } },
+    "mutation_slice": {
+      "type": "object", "required": ["units", "operators", "mutants_per_unit"],
+      "properties": {
+        "units": { "type": "array", "items": { "type": "string" } },
+        "operators": { "type": "array", "items": { "type": "string" } },
+        "mutants_per_unit": { "type": "integer" },
+        "compiling_mutants": { "type": "object", "additionalProperties": { "type": "integer" } }
+      }
+    },
+    "closure_check": {
+      "type": "object", "required": ["covered", "uncovered_units"],
+      "properties": { "covered": { "type": "boolean" }, "uncovered_units": { "type": "array", "items": { "type": "string" } } }
+    },
+    "contexts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object", "required": ["units", "tokens", "expressible"],
+        "properties": {
+          "units": { "type": "array", "items": { "type": "string" } },
+          "tokens": { "type": "integer" },
+          "expressible": { "type": "boolean" },
+          "missing_identifiers": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "new_imports": { "type": "array", "items": { "type": "string" } },
+    "tokens": {
+      "type": "object", "required": ["tokenizer", "per_unit_source", "per_unit_tests"],
+      "properties": {
+        "tokenizer": { "type": "string" },
+        "per_unit_source": { "type": "object", "additionalProperties": { "type": "integer" } },
+        "per_unit_tests": { "type": "object", "additionalProperties": { "type": "integer" } }
+      }
+    },
+    "cutoff_flags": { "type": "object", "additionalProperties": { "type": "boolean" }, "description": "model id -> instance predates documented cutoff" },
+    "provenance": {
+      "type": "object", "required": ["graph_tool", "platform", "created"],
+      "properties": {
+        "graph_tool": { "type": "string" }, "platform": { "type": "string" }, "runner_image": { "type": "string" },
+        "created": { "type": "string", "format": "date-time" }, "spec_version": { "type": "string" },
+        "upstream_license": { "type": "string" }
+      }
+    }
+  }
+}
