@@ -1,3 +1,5 @@
 # SuffBench pilot v0.1.1-pilot
 
+DOI: [10.5281/zenodo.23307204](https://doi.org/10.5281/zenodo.23307204)
+
 24-instance pilot measurement of ε-sufficient context on cli/cli (June–October 2026): Claude Haiku 5.5 (9 arms, k=10, all 24), Claude Sonnet 5.5 (5 arms, k=3, all 24), Claude Opus 5 (3 arms, k=3, the 10 instances Sonnet did not solve from task text alone). See paper/main.pdf. Instances: `instances/`; mining log with every rejection: `instances/rejected.jsonl`; verdict records: `results/*.jsonl`; aggregate: `results/PILOT-REPORT.md`, `results/pilot_cells.csv`; harness and analysis: `harness/`. Exploratory pilot: no confirmatory claim. Data and text CC-BY-4.0; code Apache-2.0.

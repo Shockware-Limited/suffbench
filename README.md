@@ -41,3 +41,7 @@ labels it from test verdicts under stubbing and mutation. See SPEC.md §7.
 Specification text and future data: CC-BY-4.0. Schema and tooling: Apache-2.0.
 
 Published by Shockware Limited. Maintainer: Jude Castiel Johansen (ORCID 0009-0002-5644-3073).
+
+## Pilot measurement (v0.1.1-pilot, October 2026)
+
+A 24-instance pilot on cli/cli with three Claude models (2,360 test-verified verdicts) is in [`pilot/`](pilot/): paper, instances, mining log, harness and all verdict records. DOI [10.5281/zenodo.23307204](https://doi.org/10.5281/zenodo.23307204). Exploratory; it fixes the design of the preregistered study and makes no confirmatory claim.
