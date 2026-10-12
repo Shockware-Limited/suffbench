@@ -45,3 +45,7 @@ Published by Shockware Limited. Maintainer: Jude Castiel Johansen (ORCID 0009-00
 ## Pilot measurement (v0.1.1-pilot, October 2026)
 
 A 24-instance pilot on cli/cli with three Claude models (2,360 test-verified verdicts) is in [`pilot/`](pilot/): paper, instances, mining log, harness and all verdict records. DOI [10.5281/zenodo.23307204](https://doi.org/10.5281/zenodo.23307204). Exploratory; it fixes the design of the preregistered study and makes no confirmatory claim.
+
+## Reference harness
+
+The pilot harness in [`pilot/harness/`](pilot/harness/) is a working reference implementation of the context compiler for Go modules: `pilot_mine.py` (instance mining with logged rejections), `pilot_contexts.py` (arms W, W+iface, W+bodies, W+iface+F, and token-targeted padding via the vendor token counter), `pilot_run.py` (single-shot editor protocol, hidden-test and dependents-scoped frame verification, verdict cache), `analysis_pilot.py`. The command-line contract in [tools/CONTEXT-COMPILER.md](tools/CONTEXT-COMPILER.md) remains the target interface; the reference scripts do not yet implement it verbatim.
