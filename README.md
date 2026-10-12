@@ -49,3 +49,7 @@ A 24-instance pilot on cli/cli with three Claude models (2,360 test-verified ver
 ## Reference harness
 
 The pilot harness in [`pilot/harness/`](pilot/harness/) is a working reference implementation of the context compiler for Go modules: `pilot_mine.py` (instance mining with logged rejections), `pilot_contexts.py` (arms W, W+iface, W+bodies, W+iface+F, and token-targeted padding via the vendor token counter), `pilot_run.py` (single-shot editor protocol, hidden-test and dependents-scoped frame verification, verdict cache), `analysis_pilot.py`. The command-line contract in [tools/CONTEXT-COMPILER.md](tools/CONTEXT-COMPILER.md) remains the target interface; the reference scripts do not yet implement it verbatim.
+
+## Preregistered confirmatory study
+
+Stage 1 protocol (Registered Report format, preregistration with fixed margins, tests, instance rules and repository list): DOI [10.5281/zenodo.23307547](https://doi.org/10.5281/zenodo.23307547). No confirmatory data have been collected.
