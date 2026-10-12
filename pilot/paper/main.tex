@@ -1,0 +1,140 @@
+\documentclass[10pt]{article}
+\usepackage[a4paper,margin=0.95in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\PassOptionsToPackage{hyphens}{url}
+\usepackage[hidelinks]{hyperref}
+\usepackage{url}
+\usepackage{microtype}
+\newcommand{\eps}{\varepsilon}
+
+\title{Interfaces or Bodies? A 24-Instance Pilot Measurement of\\ $\eps$-Sufficient Context for Language-Model Code Editing in Go}
+\author{Jude Castiel Johansen\\ Shockware Limited, independent researcher\\ \texttt{castiel@shockware.co.uk} \quad ORCID 0009-0002-5644-3073}
+\date{11 October 2026 \quad\textit{Pilot report, version 1.0}}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+A recent note defines a context as \emph{$\eps$-sufficient} for a code-editing language model when the model's pass rate on it is within $\eps$ of its pass rate on the best context in a stated family, and proves that under a bounded reader this property is not closed under superset. This report gives the first measurements. From 282 trunk commits of the GitHub CLI (June--October 2026) screened by fixed, logged rules, 24 fail-to-pass instances were obtained. Holding localisation at the gold write-set, three models (one on a 10-instance subset) edited the instances under up to nine contexts: task text only; the write-set alone; the write-set plus the exported interfaces of its direct dependencies (A1); the same with full bodies (A1b); A1 plus the interfaces of dependent packages (A1F); and A1 padded with unrelated same-repository code to 32k, 64k, 128k and 200k prompt tokens. Patches were verified by hidden fail-to-pass tests and by the tests of the write-set and its dependents. On Claude Haiku~5.5 (10 samples per cell) the interface context had a higher pass rate than bodies by $+0.04$ [$+0.01$, $+0.08$] at one third of the tokens and than the write-set alone by $+0.07$ [$+0.02$, $+0.13$]; adding dependent-package interfaces did not help ($-0.05$). These are exploratory paired estimates on 24 instances, not tests. Padding A1 to 200k tokens changed the pass rate by $-0.03$ [$-0.15$, $+0.09$] on Haiku, $+0.04$ [$-0.22$, $+0.33$] on Claude Sonnet~5.5 (3 samples per cell) and $+0.07$ [$0.00$, $+0.19$] on Claude Opus~5 (3 samples per cell, on the 10 instances Sonnet had not solved from task text alone): no interval excludes zero and the sign is not consistent across models, so the degradation curve is flat within the resolution of this pilot. Sonnet solved 14 of 24 instances at least once from the task text alone, Haiku 4 of 24, which makes a task-only control essential for any confirmatory study. Run-to-run variation at default sampling was substantial (25\% of Haiku cells non-unanimous). The whole measurement cost about \$61 in API calls at list prices. Instances, contexts, harness and all 2,360 verdicts are released. This is an exploratory pilot on one repository; it fixes the design of a preregistered study and makes no confirmatory claim.
+\end{abstract}
+
+\section{Purpose and relation to prior work}
+
+Systems that edit code with a language model choose how much of the repository to show it. The definitions note~\cite{johansen2026note} frames the choice as a question of sufficiency relative to a bounded reader: a context $K$ is $\eps$-sufficient for editor $A$ and contract $C$ when $p_A(K,C) \ge p^*_{A,\mathcal K}(C) - \eps$, where $p$ is the probability that the editor's patch passes an oracle of tests and $p^*$ is the best pass rate over a candidate family $\mathcal K$. Under a factoring of $p$ into coverage of needed facts times a non-increasing function $g$ of load, the note proves that sufficiency is not closed under superset. That result is a possibility theorem about a stylised reader; whether $g$ actually falls over practical loads, and whether the interfaces of dependencies are as good as their bodies, are empirical questions. The public SuffBench specification~\cite{suffbenchspec} fixes an instance format for asking them.
+
+This pilot measures both questions on a small scale, with the purpose of fixing the margin, the controls and the sampling of a preregistered study. Related measurements exist and the design follows them where it can: Sam-Bodden~\cite{sambodden2026context} varied the representation of surrounding Python code at fixed localisation and found signatures about as good as source; Mohammadi et al.~\cite{mohammadi2026workingset} found availability of needed facts, not position, decides success; Du et al.~\cite{du2025length} and Xue~\cite{xue2026contextrot} report accuracy falling with length even when needed facts are present; hierarchical context pruning~\cite{zhang2024hcp} found pruning dependent-file bodies harmless for completion; Bjarnason et al.~\cite{bjarnason2026randomness} quantify run-to-run randomness in agent evaluation. What is added here is small but specific: a statically typed language with compiler-derived interfaces, verdict-based outcomes with a frame check, padding at verified fixed coverage up to 200k tokens, and a task-only control that turns out to matter.
+
+\section{Instances}
+
+\textbf{Mining.} First-parent commits of \texttt{cli/cli} \texttt{trunk} from 1 June to 10 October 2026 were examined in order (282 commits). A commit $C$ with first parent $P$ became a candidate if it changed at least one non-test Go file and at least one test file, touched neither \texttt{go.mod} nor \texttt{vendor/}, deleted or renamed no source file, changed at most two non-test packages, and changed at most 120 non-test lines. For each candidate the parent was checked out, the child's versions of all changed test files were written over it, and the changed test packages were run: the package had to compile and at least one test had to fail. At the child, the same packages and then the write-set together with every package that depends on it had to be green (13 packages that fail on the Windows baseline were excluded throughout). Finally, tokens introduced by the gold patch into the write-set's sources (identifiers and string-literal words absent from the parent's write-set files) were intersected with tokens in the test diff's added lines; a non-empty intersection rejected the commit. Of 282 commits, 25 passed; the most common rejections were ``no source-and-test change'' and ``touches go.mod''. Every rejection is logged with its reason in \texttt{instances/rejected.jsonl}.
+
+\textbf{Veto.} One instance was removed on manual inspection: its hidden test asserts the exact list of GraphQL fields the command requests, a requirement no task text states and no context arm expresses. The syntactic leak rule misses it because the field name already occurs in the package. The inspection was made by the AI assistant and confirmed by the author; for transparency, this instance had already been used, before the pilot, in a pipeline-validation run with a different model in which no sample passed, so the veto was decided after an outcome was known. Its reason is independent of that outcome and is recorded in \texttt{instances/vetoes.json}. Twenty-four instances remain: 13 from August--October and 11 from June--July 2026, in 18 distinct packages. Median gold patch: 7 changed non-test lines (range 1--108).
+
+\textbf{Task text.} For 13 instances the linked GitHub issue body is the task. For 11 without a usable issue, a behaviour-only specification was written by Claude Haiku~5.5 from the pull-request text and the test diff, under an instruction to name no identifier, file or implementation, with an automatic check against the gold patch's introduced tokens. The source of each task text is recorded and the author reviewed the rewritten ones before release.
+
+\textbf{Write-set and slices.} The write-set $W$ is the set of packages whose non-test files the gold patch changes (one package in 21 instances, two in 3). Backward and forward slices come from \texttt{go list}. The forward slice ranges from 2 to 255 packages (median 6).
+
+\section{Design}
+
+\textbf{Arms.} Localisation is fixed at $W$ in every arm. Contexts are serialised deterministically with $W$ last, immediately before the task. Table~\ref{tab:arms} lists the arms with the median prompt size measured by the vendor's token counter for Haiku~5.5. Padding packages are same-module packages outside $W$, its backward slice and its forward slice, not sharing a parent directory with any $W$ package, taken in an order fixed by a hash of the instance identifier; the pad is placed before A1 and cut at a line boundary to land within 2\% of the target. A level is skipped when A1 alone exceeds it or when the padding pool is exhausted (P32 was built for 11 of 24 instances; one instance lacks P128 and P200 and another lacks P200 for the second reason). Coverage is checked syntactically: every identifier the gold patch adds must occur in the context. The check flagged A1 for 5 of 12 instances in the first mining window; the flagged tokens that were inspected were standard-library names outside the module (e.g.\ \texttt{Fprintln}), so ``fixed coverage'' below means fixed up to that limitation.
+
+\begin{table}[t]
+\centering\footnotesize
+\resizebox{\textwidth}{!}{\begin{tabular}{llr}
+\toprule
+Arm & Content & Median prompt tokens \\
+\midrule
+A$\emptyset$ & task text only & 554 \\
+W & write-set bodies & 13{,}476 \\
+A1 & W + \texttt{go doc -all} of direct in-module deps & 40{,}840 \\
+A1b & W + bodies of direct deps & 119{,}753 \\
+A1F & A1 + \texttt{go doc -all} and test names of dependents & 51{,}783 \\
+P32--P200 & A1 padded to 32k / 64k / 128k / 198k & as named \\
+\bottomrule
+\end{tabular}}
+\caption{Arms. System prompt and task are included in the token counts.}
+\label{tab:arms}
+\end{table}
+
+\textbf{Editor protocol.} Single shot: system prompt, context and task in; search-and-replace blocks out, applied with an exact matcher. One format-repair turn is allowed only when a block fails to apply; no test feedback is ever given. Sampling parameters are not settable on the models used, so every sample is an independent call at vendor defaults; identical prompts share a prompt cache. Models: \texttt{claude-haiku-5-5} on all nine arms with $k=10$ samples per cell; \texttt{claude-sonnet-5-5} on A$\emptyset$, A1, P64, P128 and P200 with $k=3$; and \texttt{claude-opus-5} on A$\emptyset$, A1 and P200 with $k=3$, restricted by budget to the 10 instances that Sonnet did not solve from task text alone (chosen before the Opus run). Documented training cut-offs were not verified against the commit dates; the task-only arm is the operational control.
+
+\textbf{Verification.} A patch is \emph{applied} if every block matches; \emph{builds} if \texttt{go build ./...} succeeds; \emph{$\Delta$-passes} if every fail-to-pass test passes; \emph{frame-passes} if, in addition, every test of $W$ and of every package depending on $W$ passes (scoping the frame check to dependents follows the note's observation that a frame violation can only surface there). Identical patches reuse their verdict. Requests above 900k tokens would be recorded as infrastructure errors; none occurred.
+
+\textbf{Analysis.} The unit is the instance. Per-cell pass rates are averaged over instances; intervals are percentile bootstraps over instances (2,000 resamples); paired differences are bootstrapped on per-instance differences. Instances that the model solved at least once from task text alone are excluded from that model's curve, and results are reported both ways. Nothing here is a confirmatory test.
+
+\section{Results}
+
+\textbf{Task-only control.} Haiku solved 4 of 24 instances at least once with no repository context (pooled pass 0.10, $k=10$); Sonnet solved 14 of 24 (0.44, $k=3$). A task-only pass requires the model to emit exact-match search blocks for files it was not shown, so it indicates either memorised code or a task text that names the location and the change; the task text is the issue or specification verbatim, which may include file paths. Opus was run only on the 10 instances Sonnet had not solved and solved none of them; because that subset was selected on Sonnet's outcome, it says nothing about Opus's own task-only rate. Sonnet's solved set is spread across the two date windows (5 of 11 from June--July, 9 of 13 from August--October). Whether this is memorisation or issue texts that make the fix obvious to a stronger model cannot be separated here; either way, a confirmatory study must screen instances with a task-only pass on its strongest model.
+
+\textbf{Interfaces versus bodies (Haiku, 24 instances, Table~\ref{tab:base}).} The write-set plus dependency interfaces (A1) had the highest pass rate of the base contexts: $+0.042$ [$+0.012$, $+0.075$] over the same packages with bodies (A1b) at one third of the tokens, with the per-instance majority outcome never disagreeing between the two ($\pi_d = 0/24$; the difference comes from six instances, all in A1's favour); $+0.067$ [$+0.021$, $+0.133$] over the write-set alone ($\pi_d = 1/24$), which produced the most build errors (11) and, tied with A1b, the most frame failures (13); and $+0.046$ [$+0.012$, $+0.083$] over A1F ($\pi_d = 1/24$), whose dependent-package interfaces gave 8 frame failures against A1's 10 but a lower pass rate. A1 was identified as best after seeing the results and the three contrasts are uncorrected; they are estimates for design, not tests. Nine instances were ceilings on which the write-set alone passed every sample. Per-cell values for every arm, model and instance are in \texttt{results/pilot\_cells.csv}.
+
+\begin{table}[t]
+\centering\small
+\resizebox{\textwidth}{!}{\begin{tabular}{lrcccc}
+\toprule
+Arm & Tokens & $\Delta$-pass [95\%] & $\Delta$-pass $\wedge$ frame & build err. & frame fail. \\
+\midrule
+A$\emptyset$ & 554 & 0.096 [0.012, 0.204] & 0.096 & 1 & 0 \\
+W & 13{,}476 & 0.579 [0.404, 0.754] & 0.525 & 11 & 13 \\
+A1 & 40{,}840 & \textbf{0.646} [0.467, 0.817] & \textbf{0.604} & 2 & 10 \\
+A1b & 119{,}753 & 0.604 [0.433, 0.775] & 0.550 & 4 & 13 \\
+A1F & 51{,}783 & 0.600 [0.425, 0.771] & 0.567 & 3 & 8 \\
+\bottomrule
+\end{tabular}}
+\caption{Base arms, Claude Haiku 5.5, 24 instances, 10 samples per cell. Counts are over 240 samples per arm.}
+\label{tab:base}
+\end{table}
+
+\textbf{Degradation at fixed coverage (Table~\ref{tab:curve}).} Because each padding level exists only for the instances whose A1 is below it, pass rates are not comparable across levels; only the paired difference at each level is interpretable. Padding A1 with unrelated code changed Haiku's pass rate by between $-0.03$ and $+0.01$ at every level up to 200k tokens, every interval covering zero. On the 9--10 instances Sonnet had not solved from task text alone its point estimates were positive at every level ($+0.11$, $+0.07$, $+0.04$ at 64k, 128k, 200k), and Opus~5 on the same instances gained $+0.074$ [$0.000$, $+0.185$] at 200k ($n=9$) from a base of 0.47 [0.17, 0.77] at A1. These positive estimates rest on one or two instances each: for Sonnet, 8 of 9 per-instance differences at 64k and 128k are exactly zero and one instance supplies the whole effect; for Opus, two instances at $+1/3$; the lower interval bounds sit at zero because no instance moved the other way. Averages also hide spread: Haiku's per-instance change at 200k ranges from $-0.7$ to $+0.8$. At $\eps = 0.05$ and at $\eps = 0.10$ alike, the smallest load, A1, was within $\eps$ of the best load for 22 of 24 instances on Haiku and on Sonnet and for 7 of the 9 Opus instances with both arms; the two Haiku exceptions trail the best load by 0.4 and 0.8, which are real gaps on those instances. Within this pilot's resolution the average degradation curve $g$ is flat from 40k to 200k tokens for these mostly single-package Go fixes, with no consistent sign across models and large per-instance variation.
+
+\begin{table}[t]
+\centering\small
+\resizebox{\textwidth}{!}{\begin{tabular}{lrcrcr}
+\toprule
+& \multicolumn{2}{c}{Haiku 5.5 ($k=10$)} & & \multicolumn{2}{c}{Sonnet 5.5 ($k=3$)} \\
+\cmidrule{2-3}\cmidrule{5-6}
+Load & $n$ & change in $\Delta$-pass, P $-$ A1 [95\%] & & $n$ & change in $\Delta$-pass, P $-$ A1 [95\%] \\
+\midrule
+P32 & 10 & $-0.030$ [$-0.120$, $+0.030$] & & -- & -- \\
+P64 & 14 & $-0.029$ [$-0.093$, $+0.014$] & & 9 & $+0.111$ [$0.000$, $+0.333$] \\
+P128 & 19 & $+0.011$ [$-0.105$, $+0.126$] & & 9 & $+0.074$ [$0.000$, $+0.222$] \\
+P200 & 18 & $-0.033$ [$-0.150$, $+0.094$] & & 9 & $+0.037$ [$-0.222$, $+0.333$] \\
+\midrule
+\multicolumn{6}{l}{\footnotesize Including task-only-solvable instances: Haiku $-0.03$, $-0.02$, $-0.02$, $-0.03$ ($n$=11, 18, 23, 22); Sonnet --, $+0.06$, $+0.03$, $+0.02$ ($n$=18, 23, 22); intervals in \texttt{PILOT-REPORT.md}.}\\
+\multicolumn{6}{l}{\footnotesize Opus 5 ($k=3$, the 10 instances Sonnet had not solved from task text; no exclusion applies): P200 $+0.074$ [$0.000$, $+0.185$], $n$=9.}\\
+\bottomrule
+\end{tabular}}
+\caption{Change in $\Delta$-pass when A1 is padded to the stated load (positive = padding helped), excluding instances the model solved from task text alone. $n$ is the number of instances with that arm built.}
+\label{tab:curve}
+\end{table}
+
+\textbf{Run-to-run variation.} With default sampling, 25\% of Haiku cells (48 of 194 with at least three samples), 11\% of Sonnet cells (12 of 111) and 7\% of Opus cells (2 of 29) were non-unanimous, with the minority outcome holding about 30\% of the samples in those cells. Per-sample noise is therefore large relative to the arm effects above; the intervals already reflect it.
+
+\textbf{Cost.} At the vendor's list prices as read on 10 October 2026 (Haiku 5.5: \$0.10 / \$0.50 per million input / output tokens, cache reads \$0.01; Sonnet 5.5: \$2 / \$10, cache reads \$0.10; Opus 5: \$5 / \$25, cache reads \$0.50; cache writes taken at 1.25$\times$ input), the Haiku arm consumed 1.44M uncached input tokens, 145M cached, 15M cache-written and 2.4M output tokens, about \$4.71; the Sonnet arm 0.23M, 18.9M, 9.5M and 0.31M, about \$29.16; the Opus arm 0.06M, 4.3M, 2.1M and 0.46M (thinking tokens included), about \$27.00. Two earlier pipeline-validation runs on instances outside this set are not included in these figures or in the released records. Prompt caching changes price, not output. Tokens per instance scale with the arm: A1 is a third of A1b and a fifth of P200.
+
+\section{What this changes in the planned study}
+
+\begin{enumerate}
+\item \textbf{Screening.} A task-only pass on the strongest evaluated model becomes a mandatory screening step; instances solved there are excluded or reported separately.
+\item \textbf{Margin.} The planned rule ``$\eps$ at least twice the flip rate'' is unusable with cell non-unanimity of 0.25; the margin must be set from per-instance pass-rate variance, and $k \ge 10$ per cell is needed on the model that carries the confirmatory contrast. On Haiku-class pricing that is affordable; on frontier pricing it is not, which argues for a cheap dense model plus a sparse frontier check.
+\item \textbf{Hypotheses.} The interfaces-versus-bodies half of H2 has a point estimate favouring interfaces; the transitive-slice half was not tested here. H1 (degradation with load) found no consistent effect up to 200k on this task class; the confirmatory design should either extend load beyond 200k or use tasks with longer dependency chains, and should state that a flat curve is an admissible outcome. H3 (forward slice reduces breakage) found nothing and stays descriptive.
+\item \textbf{Leak rule.} The syntactic rule must be paired with manual under-specification screening, as the vetoed instance shows.
+\end{enumerate}
+
+\section{Limitations}
+
+One repository and one language; 24 instances, mostly one-package fixes with a median of seven changed lines, so the ceiling rate is high and dependency reasoning is shallow. Three models of one vendor, three samples per cell on the two larger ones, and on the largest only ten instances and three arms, selected on another model's task-only outcome, so its figures are not comparable to the other models' and its task-only rate is uninformative; Opus ran with its default adaptive thinking, so inference settings differ across models. No open-weights model and therefore no temperature-zero measurement. Training cut-offs unverified. Expressibility is syntactic. Eleven task texts were written by Haiku~5.5, one of the evaluated models, from the pull-request text and the test diff; the leak check covers tokens introduced by the gold patch, not the tests, and results are not broken down by task-text source (the source is recorded per instance). Thirteen packages failing on the Windows baseline were excluded from the frame check and are listed in each instance file. Padding is of one type (same-repository code with a directory-proximity ceiling); other padding types and the full transitive slice were not run. Pricing is list pricing at the time of the run. Intervals are wide, per-instance differences are coarse at $k=3$, and nothing is corrected for multiplicity; no confirmatory conclusion should be drawn.
+
+\section{Availability}
+
+Instances (task text, gold patch, hidden tests, write-set, slices, validity record), the mining log with every rejection, the harness, the serialised arm definitions, all 2,360 verdict records and the analysis script are released under the SuffBench specification as \texttt{pilot/} in \url{https://github.com/Shockware-Limited/suffbench}, tag \texttt{v0.1.1-pilot}, CC-BY-4.0 for data and text, Apache-2.0 for code. The pilot set is disjoint from any future confirmatory set and will not be reused.
+
+\section*{Acknowledgements and AI-use disclosure}
+
+The author used Anthropic's Claude Fable 5.1, accessed in October 2026 and referred to by the author as \emph{Lemma}, to design the pilot, to write the mining, context-building, running and analysis code, to run the measurement against the author's API account, and to draft and revise this text; Claude Sonnet 5.5 and Claude Haiku 4.5 were used for parts of the harness work, and Claude Haiku 5.5 wrote the eleven rewritten task specifications under the stated constraints. The author conceived the problem and the benchmark, directed the work, reviewed the task texts, the veto, the code and this report, and takes full responsibility for its content. Generative AI tools are not authors of this work.
+
+\bibliographystyle{plain}
+\bibliography{refs}
+\end{document}
