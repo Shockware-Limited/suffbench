@@ -53,3 +53,5 @@ The pilot harness in [`pilot/harness/`](pilot/harness/) is a working reference i
 ## Preregistered confirmatory study
 
 Stage 1 protocol (Registered Report format, preregistration with fixed margins, tests, instance rules and repository list): DOI [10.5281/zenodo.23307547](https://doi.org/10.5281/zenodo.23307547). No confirmatory data have been collected.
+
+Exploratory ablations run after the pilot (Phases 1 to 3, October 2026): DOI [10.5281/zenodo.23460566](https://doi.org/10.5281/zenodo.23460566). On eleven screened instances from cli/cli and caddy, inert padding lowered Haiku 5.5 pass rates where real dependency interfaces did not, a declaration-level slice of the write-set met the non-inferiority margin only under a post-hoc sample-set choice at about half the tokens, and single-dependency necessity was non-additive on the one dependency-sensitive instance. Exploratory; no confirmatory claim. Harness and records: [suffbench-registered-report](https://github.com/Shockware-Limited/suffbench-registered-report).
